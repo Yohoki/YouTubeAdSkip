@@ -1,7 +1,10 @@
 // ==UserScript==
 // @name         YouTube Ad-Skip
 // @icon         https://www.gstatic.com/youtube/img/branding/favicon/favicon_192x192.png
-// @version      1.0.0
+// @version      1.0.1
+// @homepage     https://github.com/Yohoki/YouTubeAdSkip
+// @downloadURL  https://github.com/Yohoki/YouTubeAdSkip/raw/main/SkipAds.user.js
+// @updateURL    https://github.com/Yohoki/YouTubeAdSkip/raw/main/SkipAds.user.js
 // @description  Simple ad-blocker bypass. Clicks "Skip Ads" button as soon as possible without triggering the adblock ban.
 // @author       Yohoki
 // @match        https://www.youtube.com/*
@@ -66,7 +69,24 @@
     // Set Menu Bar color for status reporting.
     function setColor() {
         const menuBar = document.getElementById('guide-icon');
-        menuBar.style.backgroundColor = State === "Listening" ? '#FF0000' : State === "Success" ? '#00FF00' : '#FFFF00';
+        switch (State) {
+            case "Listening":
+                menuBar.style.color = '#FF0000';
+                menuBar.title = "AdSkip: Listening for ads";
+                break;
+            case "Running":
+                menuBar.style.color = '#FFFF00';
+                menuBar.title = "AdSkip: Ad Detected. Trying to skip.";
+                break;
+            case "Success":
+                menuBar.style.color = '#00FF00';
+                menuBar.title = "AdSkip: Ad successfully skipped.";
+                break;
+            case "LOCKED":
+                menuBar.style.color = '#666666';
+                menuBar.title = "AdSkip: Not running on current page.";
+                break;
+        }
     }
 
     // Create a MutationObserver to watch for changes in the DOM
