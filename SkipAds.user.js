@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YouTube Ad-Skip
 // @icon         https://www.gstatic.com/youtube/img/branding/favicon/favicon_192x192.png
-// @version      1.0.1
+// @version      1.0.2
 // @homepage     https://github.com/Yohoki/YouTubeAdSkip
 // @downloadURL  https://github.com/Yohoki/YouTubeAdSkip/raw/main/SkipAds.user.js
 // @updateURL    https://github.com/Yohoki/YouTubeAdSkip/raw/main/SkipAds.user.js
@@ -15,7 +15,7 @@
 (function () {
     'use strict';
 
-    let State = "Listening";
+    let State = window.location.href.includes("watch") ? "Listening" : "LOCKED";
     let BlockedInterval = 0;
     let currentPage = window.location.href;
 
@@ -31,6 +31,7 @@
         }
         if (!window.location.href.includes("watch")) {
             State = "LOCKED";
+            setColor();
             //console.debug("LOCKED");
         }
     }
