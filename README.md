@@ -7,3 +7,6 @@ The hamburger menu button (Top left of screen, three horizontal bars) will show 
 - 🔴**Red**: The script is active in the background but not currently trying to block an ad.
 - 🟡**Yellow**: The script has detected an ad playing and is attempting to click the skip button.
 - 🟢**Green**: The button was successfully clicked and the ad should have been skipped.
+
+
+[Install Here](https://github.com/Yohoki/YouTubeAdSkip/raw/main/SkipAds.user.js)
