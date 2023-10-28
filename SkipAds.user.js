@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YouTube Ad-Skip
 // @icon         https://www.gstatic.com/youtube/img/branding/favicon/favicon_192x192.png
-// @version      1.0.3
+// @version      1.0.4
 // @homepage     https://github.com/Yohoki/YouTubeAdSkip
 // @downloadURL  https://github.com/Yohoki/YouTubeAdSkip/raw/main/SkipAds.user.js
 // @updateURL    https://github.com/Yohoki/YouTubeAdSkip/raw/main/SkipAds.user.js
@@ -14,74 +14,61 @@
 
 (function () {
     'use strict';
-
-    //let State = window.location.href.includes("watch") ? "Listening" : "LOCKED";
+    // Initialization
 	let State = "Listening";
     let BlockedInterval = 0;
+    setColor();
 
-	//Maybe not needed since homepage has video ads.
-	let currentPage = window.location.href;
-
-    //Function to handle the URL change
-    function handleURLChange() {
-        const newURL = window.location.href;
-        if (newURL !== currentPage) {
-            // URL has changed, reset the State
-            State = "Listening";
-            BlockedInterval = 0;
-            setColor();
-            currentPage = newURL;
-        }
-        /*if (!window.location.href.includes("watch")) {
-            State = "LOCKED";
-            setColor();
-            //console.debug("LOCKED");
-        }*/
-    }
-
-    // Create a function to handle the changes in the DOM
+    // Function to handle the changes in the DOM
     function handleDOMChanges(mutationsList) {
-        if (State === "LOCKED") {return;}
-        //Dec color timer and set colors.
-        BlockedInterval--;
-        setColor();
-        //console.debug("blockedinterval: " + BlockedInterval);
-
-        //console.log("AdSkip: Observer Listening");
-        State = BlockedInterval > 0 ? State : "Listening";
+        console.info("AdSkip: Observer Listening");
         for (let mutation of mutationsList) {
             if (mutation.type === 'childList') {
+
                 // Check if an ad is showing
                 const midVidAd = document.querySelector('.ad-showing');
-				const homePageAd = document.querySelector('#player #movie_player');
-				const homePagePremBanner = document.querySelector('#dismiss-button button');
-                if (midVidAd) {
+				const homePageIframe = document.getElementById('player');
+                const homePagePremBanner = document.getElementById('masthead-ad');
+				const homePageInFeed = document.querySelector('ytd-ad-slot-renderer').parentElement;//.parentElement;
+
+                if (midVidAd) { // Mid-video ad break //
                     //console.log("AdSkip: An ad is currently Playing.");
                     State = "Running";
                     const skipButton = document.querySelector('button.ytp-ad-skip-button.ytp-button');
                     if (skipButton) {
                         skipButton.click();
                         //console.log("AdSkip: Button found and clicked.");
-                        State = "Success";
                         BlockedInterval = 10;
                     } else {
+                        BlockedInterval = 0;
+                        setColor();
                         //console.log("AdSkip: Skip button not ready.");
                     }
                 }
-                if (homePageAd.classList.contains("playing-mode")) {
-					homePageAd.classList.remove("playing-mode");
-					homePageAd.classList.add("ytp-small-mode");
-					homePageAd.classList.add("unstarted-mode");
-					console.log("AdSkip: Home Page ad paused.");
-					State = "Success";
-					BlockedInterval = 10;
-                }
-				if (homePagePremBanner) {
-					homePagePremBanner.click();
-					console.log("AdSkip: Home Page banner closed.");
-					State = "Success";
-					BlockedInterval = 10;
-				}
+		if (homePageIframe) { // Hopepage Video ad inside iframe //
+			const VideoAd = homePageIframe.contentDocument.querySelector('#movie_player');
+			if (VideoAd.classList.contains("playing-mode")) {
+				VideoAd.classList.remove("playing-mode");
+				VideoAd.classList.add("ytp-small-mode");
+				VideoAd.classList.add("unstarted-mode");
+				console.log("AdSkip: Home Page video ad paused.");
+				BlockedInterval = 10;
+			}
+		}
+		if (homePagePremBanner) { // Homepage, Large banner ad for premium subscription //
+                    if (homePagePremBanner.style.display != 'none') {
+                        homePagePremBanner.style.display = "none";
+                        console.log("AdSkip: Home Page banner hidden.");
+                        BlockedInterval = 10;
+                    }
+		}
+		if (homePageInFeed) { // Homepage, Small in-feed ads that look like a video. //
+                    if (homePageInFeed.style.display != 'none') {
+                        homePageInFeed.style.display = 'none';
+                        console.log("AdSkip: Home Page in-feed ad hidden.");
+                        BlockedInterval = 10;
+                    }
+		}
             }
         }
     }
@@ -89,6 +76,11 @@
     // Set Menu Bar color for status reporting.
     function setColor() {
         const menuBar = document.getElementById('guide-icon');
+        if (BlockedInterval>0) {
+            State = BlockedInterval == 1 ? "Listening" : "Success";
+            BlockedInterval--;
+            console.debug("blockedinterval: " + BlockedInterval);
+        }
         switch (State) {
             case "Listening":
                 menuBar.style.color = '#FF0000';
@@ -102,26 +94,17 @@
                 menuBar.style.color = '#00FF00';
                 menuBar.title = "AdSkip: Ad successfully skipped.";
                 break;
-            /*case "LOCKED":
+            default:
                 menuBar.style.color = '#666666';
-                menuBar.title = "AdSkip: Not running on current page.";
-                break;*/
+                menuBar.title = "AdSkip: Not running on current page. Sum Ting Wong";
+                break;
         }
     }
 
-    // Create a MutationObserver to watch for changes in the DOM
+    // MutationObserver to watch for changes in the DOM
     const observer = new MutationObserver(handleDOMChanges);
-
-    // Define the options for the observer
-    const observerOptions = {
-        childList: true, // Watch for changes to the child elements of the target
-        subtree: true, // Watch for changes in the entire subtree
-    };
-
-    // Start observing the DOM
+    const observerOptions = { childList: true, subtree: true, };
     observer.observe(document.body, observerOptions);
 
-	// Maybe not needed
-    // Add an interval to check for URL changes
-    setInterval(handleURLChange, 1000);
+    setInterval(setColor, 1000);
 })();
