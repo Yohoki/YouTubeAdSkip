@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YouTube Ad-Skip
 // @icon         https://www.gstatic.com/youtube/img/branding/favicon/favicon_192x192.png
-// @version      1.0.2
+// @version      1.0.3
 // @homepage     https://github.com/Yohoki/YouTubeAdSkip
 // @downloadURL  https://github.com/Yohoki/YouTubeAdSkip/raw/main/SkipAds.user.js
 // @updateURL    https://github.com/Yohoki/YouTubeAdSkip/raw/main/SkipAds.user.js
@@ -15,11 +15,14 @@
 (function () {
     'use strict';
 
-    let State = window.location.href.includes("watch") ? "Listening" : "LOCKED";
+    //let State = window.location.href.includes("watch") ? "Listening" : "LOCKED";
+	let State = "Listening";
     let BlockedInterval = 0;
-    let currentPage = window.location.href;
 
-    // Function to handle the URL change
+	//Maybe not needed since homepage has video ads.
+	let currentPage = window.location.href;
+
+    //Function to handle the URL change
     function handleURLChange() {
         const newURL = window.location.href;
         if (newURL !== currentPage) {
@@ -29,11 +32,11 @@
             setColor();
             currentPage = newURL;
         }
-        if (!window.location.href.includes("watch")) {
+        /*if (!window.location.href.includes("watch")) {
             State = "LOCKED";
             setColor();
             //console.debug("LOCKED");
-        }
+        }*/
     }
 
     // Create a function to handle the changes in the DOM
@@ -44,25 +47,41 @@
         setColor();
         //console.debug("blockedinterval: " + BlockedInterval);
 
-        //console.log("AdSkip Observer Listening");
+        //console.log("AdSkip: Observer Listening");
         State = BlockedInterval > 0 ? State : "Listening";
         for (let mutation of mutationsList) {
             if (mutation.type === 'childList') {
                 // Check if an ad is showing
-                const adShowing = document.querySelector('.ad-showing');
-                if (adShowing) {
-                    //console.log("Ad is currently Playing.");
+                const midVidAd = document.querySelector('.ad-showing');
+				const homePageAd = document.querySelector('#player #movie_player');
+				const homePagePremBanner = document.querySelector('#dismiss-button button');
+                if (midVidAd) {
+                    //console.log("AdSkip: An ad is currently Playing.");
                     State = "Running";
                     const skipButton = document.querySelector('button.ytp-ad-skip-button.ytp-button');
                     if (skipButton) {
                         skipButton.click();
-                        //console.log("Button found and clicked.");
+                        //console.log("AdSkip: Button found and clicked.");
                         State = "Success";
-                        BlockedInterval = 20;
+                        BlockedInterval = 10;
                     } else {
-                        //console.log("Skip button not ready.");
+                        //console.log("AdSkip: Skip button not ready.");
                     }
                 }
+                if (homePageAd.classList.contains("playing-mode")) {
+					homePageAd.classList.remove("playing-mode");
+					homePageAd.classList.add("ytp-small-mode");
+					homePageAd.classList.add("unstarted-mode");
+					console.log("AdSkip: Home Page ad paused.");
+					State = "Success";
+					BlockedInterval = 10;
+                }
+				if (homePagePremBanner) {
+					homePagePremBanner.click();
+					console.log("AdSkip: Home Page banner closed.");
+					State = "Success";
+					BlockedInterval = 10;
+				}
             }
         }
     }
@@ -83,10 +102,10 @@
                 menuBar.style.color = '#00FF00';
                 menuBar.title = "AdSkip: Ad successfully skipped.";
                 break;
-            case "LOCKED":
+            /*case "LOCKED":
                 menuBar.style.color = '#666666';
                 menuBar.title = "AdSkip: Not running on current page.";
-                break;
+                break;*/
         }
     }
 
@@ -102,6 +121,7 @@
     // Start observing the DOM
     observer.observe(document.body, observerOptions);
 
+	// Maybe not needed
     // Add an interval to check for URL changes
     setInterval(handleURLChange, 1000);
 })();
