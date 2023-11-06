@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YouTube Ad-Skip
 // @icon         https://www.gstatic.com/youtube/img/branding/favicon/favicon_192x192.png
-// @version      1.0.8
+// @version      1.1.001
 // @homepage     https://github.com/Yohoki/YouTubeAdSkip
 // @downloadURL  https://github.com/Yohoki/YouTubeAdSkip/raw/main/SkipAds.user.js
 // @updateURL    https://github.com/Yohoki/YouTubeAdSkip/raw/main/SkipAds.user.js
@@ -14,26 +14,23 @@
 // @grant        GM_setValue
 // ==/UserScript==
 
-// Creator ID is at
-// document.querySelector('a#header').href;
-
 (function () {
     'use strict';
     //Debug mode
     const debugMode = false;
 
     // Initialization
-	let State = "Listening";
+    let State = "Listening";
     let BlockedInterval = 0;
     let watchPage = window.location.href.includes('watch');
     const searchBar = document.querySelector('ytd-searchbox[id="search"] div[id="container"]');
     const guideButton = document.querySelector('yt-icon-button#guide-button');
     //Debug button:
     const debugButton = document.createElement('div');
-    const blockButton = document.createElement('div');
+    const highlightButton = document.createElement('div');
     const WhitelistButton = document.createElement('div');
     debugButton.id = "DEBUG_button";
-    blockButton.id = "DEBUG_block";
+    highlightButton.id = "DEBUG_block";
     WhitelistButton.id = "Whitelist";
 
     setColor();
@@ -83,17 +80,6 @@
                         setColor();
                         clickElement(skipButton, null, 'Button found and clicked.');
                     }
-                    /*console.log(curTime + " - AdSkip: An ad is currently Playing.");
-                    const skipButton = document.querySelector('button.ytp-ad-skip-button.ytp-button');
-                    if (skipButton) {
-                        State = "Listening";
-                        clickElement(skipButton, null, 'Button found and clicked.');
-                    } else {
-                        State = "Running";
-                        BlockedInterval = 0;
-                        setColor();
-                        //console.log(curTime + " - AdSkip: Skip button not ready.");
-                    }*/
                 }
                 if (homePageMasthead.length > 0) { // Top of feed large banner ad, with or without a video. //
                     homePageMasthead.forEach(temp => removeElement(temp, "Home Page banner ad removed. (MastHead)"));
@@ -107,7 +93,7 @@
                     });
                 }
                 if (homePageInFeed.length>0 && watchPage) { // Watch Page, in-feed ad that look like a video. //
-		    homePageInFeed.forEach((temp) => removeElement(temp, '"Next Video" ad removed.'));
+				    homePageInFeed.forEach((temp) => removeElement(temp, '"Next Video" ad removed.'));
                 }
                 if (homePageInFeedTV) { // Homepage, YouTubeTV mid-feed YTTV banner. //
                     clickElement(homePageInFeedTV, 'button', "YouTubeTV ad banner dismissed. (Primetime Promo)");
@@ -223,15 +209,52 @@
 
     debugButton.innerHTML = `
         <div>
-            <svg width="25px" height="25px" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
-                <path fill-rule="evenodd" clip-rule="evenodd" d="M4 2H3V14H4V2ZM7.29062 2.59314L6.5 3.00001V13L7.29062 13.4069L14.2906 8.40687V7.59314L7.29062 2.59314ZM13.1398 8.00001L7.5 12.0284V3.9716L13.1398 8.00001Z"/>
+            <svg xmlns="http://www.w3.org/2000/svg" width="25px" height="25px" viewBox="0 0 100 91" fill="none" stroke="currentcolor" stroke-width="6">
+                <path id="Bug" d="M 31.00,33.00 C 31.00,33.00 31.75,16.62 50.00,17.00 69.62,16.88 70.00,33.00 70.00,33.00 70.00,33.00 70.00,62.00 70.00,62.00 70.00,62.00 68.88,78.62 50.00,79.00 31.12,79.25 31.00,62.00 31.00,62.00 31.00,62.00 31.00,33.00 31.00,33.00 Z M 38.88,8.25 C 38.88,8.25 50.12,26.62 61.62,8.38 61.62,8.50 51.38,27.25 38.88,8.25 Z M 43.62,40.00 C 43.62,40.00 56.25,40.25 56.25,40.25M 43.50,55.62 C 43.50,55.62 56.50,55.62 56.50,55.62M 92.25,11.62 C 92.25,11.62 92.25,25.75 92.25,25.75 92.25,25.75 71.00,37.25 71.00,37.25M 8.00,11.00 C 8.00,11.00 8.00,25.00 8.00,25.00 8.00,25.00 29.50,37.00 29.50,37.00M 8.00,48.00 C 8.00,48.00 29.00,48.00 29.00,48.00M 92.00,48.00 C 92.00,48.00 71.00,48.00 71.00,48.00M 92.00,85.00 C 92.00,85.00 92.00,70.00 92.00,70.00 92.00,70.00 71.00,59.00 71.00,59.00M 8.00,85.00 C 8.00,85.00 8.00,70.00 8.00,70.00 8.00,70.00 29.00,59.00 29.00,59.00" />
             </svg>
         </div>
     `;
-    blockButton.innerHTML = `
+    highlightButton.innerHTML = `
         <div>
-            <svg xmlns="http://www.w3.org/2000/svg" stroke="currentcolor" stroke-width="4px" width="25px" height="25px">
-                <polygon points="31.663 5.5 16.337 5.5 5.5 16.337 5.5 31.663 16.337 42.5 31.663 42.5 42.5 31.663 42.5 16.337 31.663 5.5" transform="scale(.5)"/><line x1="18" y1="30" x2="30" y2="18" transform="scale(.5)"/><line x1="18" y1="18" x2="30" y2="30" transform="scale(.5)"/>
+            <svg xmlns="http://www.w3.org/2000/svg" width="25px" height="25px" viewBox="0 0 626 626">
+	        <symbol id="FirstFill">
+		        <g>
+			        <path id="Highlight" d="M 164.00,417.11 C 164.00,417.11 199.00,417.11 199.00,417.11 199.00,417.11 262.00,417.11 262.00,417.11 262.00,417.11 453.00,417.11 453.00,417.11 460.48,417.01 467.93,418.17 475.00,420.70 480.41,422.63 487.40,426.34 492.00,429.76 507.99,441.65 517.91,461.09 518.00,481.00 518.00,481.00 518.00,495.00 518.00,495.00 518.00,495.00 518.00,522.00 518.00,522.00 517.58,557.19 487.69,584.95 453.00,585.00 453.00,585.00 172.00,585.00 172.00,585.00 137.31,584.95 107.42,557.19 107.00,522.00 107.00,522.00 107.00,495.00 107.00,495.00 107.00,469.27 107.97,453.14 128.00,434.04 132.81,429.45 137.10,426.71 143.00,423.76 150.93,419.79 155.41,418.83 164.00,417.11 Z" />
+    		    </g>
+	        </symbol>
+	        <symbol id="FirstDraw">
+    		    <g>
+	    		    <path id="TargetCircle" d="M 305.00,202.43 C 357.96,195.89 396.31,247.90 376.80,297.00 373.66,304.88 368.92,311.94 362.99,318.00 357.30,323.80 350.47,329.24 343.00,332.56 331.89,337.50 323.08,339.14 311.00,339.00 260.63,338.41 230.11,282.88 252.37,239.00 263.09,217.87 282.22,206.16 305.00,202.43 Z" />
+		        </g>
+    	    </symbol>
+	        <symbol id="CutsTarget">
+		        <g>
+			        <path id="CutVerti" d="M 313.00,172.00 C 313.00,172.00 313.00,369.00 313.00,369.00" />
+			        <path id="CutHori" d="M 215.00,270.00 C 215.00,270.00 413.00,270.00 413.00,270.00" />
+    		    </g>
+	        </symbol>
+	        <symbol id="CutsCSS">
+		        <g>
+			        <path id="CutC" d="M 236.00,481.75 C 234.50,453.75 198.50,462.50 198.75,478.50 198.75,478.50 198.50,520.00 198.50,520.50 197.75,540.75 234.75,544.00 236.00,519.75 236.00,519.75 258.25,520.00 258.50,520.00 253.50,568.50 177.75,573.00 177.25,520.00 177.25,520.00 177.00,482.00 177.00,482.00 175.00,427.50 257.25,429.25 258.50,482.00 258.50,482.00 236.00,482.00 236.00,481.75 Z" />
+			        <path id="CutS0" d="M 351.50,454.75 C 351.50,454.75 342.50,472.25 342.50,472.25 342.50,472.25 301.25,450.75 295.00,475.75 295.00,475.75 293.50,487.25 318.00,490.00 318.00,490.00 358.00,493.50 354.25,523.25 354.25,523.25 358.00,559.25 311.50,558.00 311.50,558.00 286.75,561.50 267.75,544.25 267.75,544.25 277.75,527.00 277.75,527.00 277.75,527.00 294.50,539.50 310.75,537.00 310.75,537.00 329.50,540.00 333.00,525.00 333.00,525.00 334.75,509.50 306.75,510.75 306.75,510.75 270.50,507.25 273.75,477.50 273.75,477.50 269.50,442.50 313.00,442.50 312.50,442.50 335.50,440.25 351.50,454.75 Z" />
+			        <path id="CutS1" d="M 446.50,454.75 C 446.50,454.75 437.50,472.25 437.50,472.25 437.50,472.25 396.25,450.75 390.00,475.75 390.00,475.75 388.50,487.25 413.00,490.00 413.00,490.00 453.00,493.50 449.25,523.25 449.25,523.25 453.00,559.25 406.50,558.00 406.50,558.00 381.75,561.50 362.75,544.25 362.75,544.25 372.75,527.00 372.75,527.00 372.75,527.00 389.50,539.50 405.75,537.00 405.75,537.00 424.50,540.00 428.00,525.00 428.00,525.00 429.75,509.50 401.75,510.75 401.75,510.75 365.50,507.25 368.75,477.50 368.75,477.50 364.50,442.50 408.00,442.50 407.50,442.50 430.50,440.25 446.50,454.75 Z" />
+		        </g>
+    	    </symbol>
+        	<symbol id="SecondDraw">
+		        <g>
+			        <path id="TargetBullseye" d="M 309.00,251.31 C 311.22,251.17 312.72,250.94 315.00,251.31 340.35,252.86 338.08,291.72 312.00,289.90 291.24,288.46 286.14,258.36 309.00,251.31 Z" />
+			        <path id="Dogear" d="M 394.00,46.00 C 394.00,46.00 394.00,164.00 394.00,164.00 394.00,164.00 514.00,165.00 514.00,165.00" />
+    			    <path id="RBracket" d="M 412.00,183.00 C 412.00,183.00 440.00,183.00 440.00,205.00 440.00,205.00 440.00,247.00 440.00,247.00 440.00,270.00 476.00,270.00 476.00,270.00 476.00,270.00 440.00,270.00 440.00,291.00 440.00,291.00 440.00,336.00 440.00,336.00 440.00,361.00 412.00,361.00 412.00,361.00" />
+	    		    <path id="TargetSights" d="M 215.00,270.00 C 215.00,270.00 281.75,270.00 281.75,270.00M 313.00,172.00 C 313.00,172.00 313.00,238.00 313.00,238.00M 413.00,270.00 C 413.00,270.00 345.50,270.00 345.50,270.00M 313.00,369.00 C 313.00,369.00 313.00,302.75 313.00,302.75" />
+		    	    <path id="LBracket" d="M 214.00,183.00 C 214.00,183.00 186.00,183.00 186.00,205.00 186.00,205.00 186.00,247.00 186.00,247.00 186.00,270.00 150.00,270.00 150.00,270.00 150.00,270.00 186.00,270.00 186.00,291.00 186.00,291.00 186.00,336.00 186.00,336.00 186.00,361.00 214.00,361.00 214.00,361.00" />
+			        <path id="Page" d="M 107.00,374.00 C 107.00,374.00 107.00,40.00 107.00,40.00 107.00,40.00 398.00,40.00 398.00,40.00 398.00,40.00 518.00,161.00 518.00,161.00 518.00,161.00 518.00,374.00 518.00,374.00" />
+		        </g>
+    	    </symbol>
+            <use href="#FirstFill" style="stroke:none; fill:currentcolor;" />
+            <use href="#FirstDraw" style="stroke:currentcolor; stroke-width:20px; fill:none;" />
+            <use href="#CutsTarget" style="stroke:var(--ytd-searchbox-background); stroke-width:40px; fill:none;" />
+            <use href="#CutsCSS" style="stroke:none; fill:var(--ytd-searchbox-background);" />
+            <use href="#SecondDraw" style="stroke:currentcolor; stroke-width:20px; fill:none;" />
             </svg>
         </div>
     `;
@@ -253,7 +276,7 @@
             searchBar.appendChild(debugButton);
         }
         if (searchBar && debugMode) {// && watchPage) {
-            searchBar.appendChild(blockButton);
+            searchBar.appendChild(highlightButton);
         }
     }
     function addWatchPageButtons() {
@@ -266,7 +289,7 @@
         removeElement(document.querySelector('#Whitelist'));
         //removeElement(document.querySelector('#DEBUG_block'));
     }
-    debugButton.addEventListener('click', function() {
+    highlightButton.addEventListener('click', function() {
         const searchBarText = document.querySelector('input#search').value;
         const Elements = document.querySelectorAll(searchBarText)
         Elements.forEach(temp => {
@@ -274,7 +297,7 @@
             DEBUG_highlightElement(temp);
         });
     });
-    blockButton.addEventListener('click', function() {
+    debugButton.addEventListener('click', function() {
         console.debug(watchPage);
     });
     WhitelistButton.addEventListener('click', function() {
