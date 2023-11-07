@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YouTube Ad-Skip
 // @icon         https://www.gstatic.com/youtube/img/branding/favicon/favicon_192x192.png
-// @version      1.1.002
+// @version      1.1.003
 // @homepage     https://github.com/Yohoki/YouTubeAdSkip
 // @downloadURL  https://github.com/Yohoki/YouTubeAdSkip/raw/main/SkipAds.user.js
 // @updateURL    https://github.com/Yohoki/YouTubeAdSkip/raw/main/SkipAds.user.js
@@ -32,6 +32,8 @@
     debugButton.id = "DEBUG_button";
     highlightButton.id = "DEBUG_block";
     WhitelistButton.id = "Whitelist";
+    WhitelistButton.style = "color:var(--ytd-searchbox-text-color);";
+    WhitelistButton.title = "Whitelist not loaded. Usually happens while page is still loading."
 
     setColor();
     addButtons();
@@ -204,7 +206,7 @@
 
     debugButton.innerHTML = `
         <div>
-            <svg xmlns="http://www.w3.org/2000/svg" width="25px" height="25px" viewBox="0 0 100 91" fill="none" stroke="currentcolor" stroke-width="6">
+            <svg xmlns="http://www.w3.org/2000/svg" width="25px" height="25px" viewBox="0 0 100 91" fill="none" stroke="var(--ytd-searchbox-text-color)" stroke-width="6">
                 <path id="Bug" d="M 31.00,33.00 C 31.00,33.00 31.75,16.62 50.00,17.00 69.62,16.88 70.00,33.00 70.00,33.00 70.00,33.00 70.00,62.00 70.00,62.00 70.00,62.00 68.88,78.62 50.00,79.00 31.12,79.25 31.00,62.00 31.00,62.00 31.00,62.00 31.00,33.00 31.00,33.00 Z M 38.88,8.25 C 38.88,8.25 50.12,26.62 61.62,8.50 61.62,8.50 51.38,27.25 38.88,8.25 Z M 43.62,40.00 C 43.62,40.00 56.25,40.25 56.25,40.25M 43.50,55.62 C 43.50,55.62 56.50,55.62 56.50,55.62M 92.25,11.62 C 92.25,11.62 92.25,25.75 92.25,25.75 92.25,25.75 71.00,37.25 71.00,37.25M 8.00,11.00 C 8.00,11.00 8.00,25.00 8.00,25.00 8.00,25.00 29.50,37.00 29.50,37.00M 5.00,48.00 C 8.00,48.00 29.00,48.00 29.00,48.00M 95.00,48.00 C 92.00,48.00 71.00,48.00 71.00,48.00M 92.00,85.00 C 92.00,85.00 92.00,70.00 92.00,70.00 92.00,70.00 71.00,59.00 71.00,59.00M 8.00,85.00 C 8.00,85.00 8.00,70.00 8.00,70.00 8.00,70.00 29.00,59.00 33.00,59.00" />
             </svg>
         </div>
@@ -245,11 +247,11 @@
                     <path id="Page" d="M 107.00,374.00 C 107.00,374.00 107.00,40.00 107.00,40.00 107.00,40.00 398.00,40.00 398.00,40.00 398.00,40.00 518.00,161.00 518.00,161.00 518.00,161.00 518.00,374.00 518.00,374.00" />
 		        </g>
     	    </symbol>
-            <use href="#FirstFill" style="stroke:none; fill:currentcolor;" />
-            <use href="#FirstDraw" style="stroke:currentcolor; stroke-width:20px; fill:none;" />
+            <use href="#FirstFill" style="stroke:none; fill:var(--ytd-searchbox-text-color);" />
+            <use href="#FirstDraw" style="stroke:var(--ytd-searchbox-text-color); stroke-width:20px; fill:none;" />
             <use href="#CutsTarget" style="stroke:var(--ytd-searchbox-background); stroke-width:40px; fill:none;" />
             <use href="#CutsCSS" style="stroke:none; fill:var(--ytd-searchbox-background);" />
-            <use href="#SecondDraw" style="stroke:currentcolor; stroke-width:20px; fill:none; stroke-linecap:round;" />
+            <use href="#SecondDraw" style="stroke:var(--ytd-searchbox-text-color); stroke-width:20px; fill:none; stroke-linecap:round;" />
             </svg>
         </div>
     `;
