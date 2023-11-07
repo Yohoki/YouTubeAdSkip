@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YouTube Ad-Skip
 // @icon         https://www.gstatic.com/youtube/img/branding/favicon/favicon_192x192.png
-// @version      1.1.001
+// @version      1.1.002
 // @homepage     https://github.com/Yohoki/YouTubeAdSkip
 // @downloadURL  https://github.com/Yohoki/YouTubeAdSkip/raw/main/SkipAds.user.js
 // @updateURL    https://github.com/Yohoki/YouTubeAdSkip/raw/main/SkipAds.user.js
@@ -44,26 +44,22 @@
     // Function to handle the changes in the DOM
     function handleDOMChanges(mutationsList) {
         watchPage = window.location.href.includes('watch');
-        //console.debug(watchPage);
         if (!watchPage) { removeWatchPageButtons(); }
         if (watchPage) { addWatchPageButtons(); }
         if (creatorIdInWhitelist() && watchPage) return;
         const curTime = new Date(Date.now()).toLocaleTimeString('en-US');
-        //console.debug("AdSkip - Video page? : window.location.href.includes('watch'));
-        //console.debug(curTime + " - AdSkip: Observer Listening");
         for (let mutation of mutationsList) {
             if (mutation.type === 'childList') {
 
                 // Check if an ad is showing
                 const midVidAd = document.querySelector('.ad-showing video');
                 const midVidPaper = document.querySelector('tp-yt-paper-dialog');
-				const homePageMasthead = document.querySelectorAll('div#masthead-ad');
+                const homePageMasthead = document.querySelectorAll('div#masthead-ad');
                 const homePageInFeed = document.querySelectorAll('ytd-rich-item-renderer');
                 const homePageInFeedTV = document.querySelector('ytd-primetime-promo-renderer');
                 const homePageInFeedPrem = document.querySelector('ytd-statement-banner-renderer');
                 const homePageBrandBanner = document.querySelector('ytd-brand-video-singleton-renderer');
                 const homePageNudge = document.querySelector('ytd-feed-nudge-renderer');
-                //console.debug(homePageInFeed);
 
                 if (midVidAd) { // Mid-video ad break //
                     if (midVidAd.currentTime < midVidAd.duration) {
@@ -93,7 +89,7 @@
                     });
                 }
                 if (homePageInFeed.length>0 && watchPage) { // Watch Page, in-feed ad that look like a video. //
-				    homePageInFeed.forEach((temp) => removeElement(temp, '"Next Video" ad removed.'));
+                    homePageInFeed.forEach((temp) => removeElement(temp, '"Next Video" ad removed.'));
                 }
                 if (homePageInFeedTV) { // Homepage, YouTubeTV mid-feed YTTV banner. //
                     clickElement(homePageInFeedTV, 'button', "YouTubeTV ad banner dismissed. (Primetime Promo)");
@@ -139,7 +135,6 @@
         console.log(curTime + " - AdSkip: " + Msg);
     }
     function DEBUG_highlightElement(Element) {
-        //Element.style.backgroundColor = '#FFFF00';
         setTimeout(function() {
             Element.style.transition = 'background-color 1s';
             Element.style.backgroundColor = '#00FF00'; // Set to transparent to start the fade
@@ -210,7 +205,7 @@
     debugButton.innerHTML = `
         <div>
             <svg xmlns="http://www.w3.org/2000/svg" width="25px" height="25px" viewBox="0 0 100 91" fill="none" stroke="currentcolor" stroke-width="6">
-                <path id="Bug" d="M 31.00,33.00 C 31.00,33.00 31.75,16.62 50.00,17.00 69.62,16.88 70.00,33.00 70.00,33.00 70.00,33.00 70.00,62.00 70.00,62.00 70.00,62.00 68.88,78.62 50.00,79.00 31.12,79.25 31.00,62.00 31.00,62.00 31.00,62.00 31.00,33.00 31.00,33.00 Z M 38.88,8.25 C 38.88,8.25 50.12,26.62 61.62,8.38 61.62,8.50 51.38,27.25 38.88,8.25 Z M 43.62,40.00 C 43.62,40.00 56.25,40.25 56.25,40.25M 43.50,55.62 C 43.50,55.62 56.50,55.62 56.50,55.62M 92.25,11.62 C 92.25,11.62 92.25,25.75 92.25,25.75 92.25,25.75 71.00,37.25 71.00,37.25M 8.00,11.00 C 8.00,11.00 8.00,25.00 8.00,25.00 8.00,25.00 29.50,37.00 29.50,37.00M 8.00,48.00 C 8.00,48.00 29.00,48.00 29.00,48.00M 92.00,48.00 C 92.00,48.00 71.00,48.00 71.00,48.00M 92.00,85.00 C 92.00,85.00 92.00,70.00 92.00,70.00 92.00,70.00 71.00,59.00 71.00,59.00M 8.00,85.00 C 8.00,85.00 8.00,70.00 8.00,70.00 8.00,70.00 29.00,59.00 29.00,59.00" />
+                <path id="Bug" d="M 31.00,33.00 C 31.00,33.00 31.75,16.62 50.00,17.00 69.62,16.88 70.00,33.00 70.00,33.00 70.00,33.00 70.00,62.00 70.00,62.00 70.00,62.00 68.88,78.62 50.00,79.00 31.12,79.25 31.00,62.00 31.00,62.00 31.00,62.00 31.00,33.00 31.00,33.00 Z M 38.88,8.25 C 38.88,8.25 50.12,26.62 61.62,8.50 61.62,8.50 51.38,27.25 38.88,8.25 Z M 43.62,40.00 C 43.62,40.00 56.25,40.25 56.25,40.25M 43.50,55.62 C 43.50,55.62 56.50,55.62 56.50,55.62M 92.25,11.62 C 92.25,11.62 92.25,25.75 92.25,25.75 92.25,25.75 71.00,37.25 71.00,37.25M 8.00,11.00 C 8.00,11.00 8.00,25.00 8.00,25.00 8.00,25.00 29.50,37.00 29.50,37.00M 5.00,48.00 C 8.00,48.00 29.00,48.00 29.00,48.00M 95.00,48.00 C 92.00,48.00 71.00,48.00 71.00,48.00M 92.00,85.00 C 92.00,85.00 92.00,70.00 92.00,70.00 92.00,70.00 71.00,59.00 71.00,59.00M 8.00,85.00 C 8.00,85.00 8.00,70.00 8.00,70.00 8.00,70.00 29.00,59.00 33.00,59.00" />
             </svg>
         </div>
     `;
@@ -242,32 +237,35 @@
     	    </symbol>
         	<symbol id="SecondDraw">
 		        <g>
-			        <path id="TargetBullseye" d="M 309.00,251.31 C 311.22,251.17 312.72,250.94 315.00,251.31 340.35,252.86 338.08,291.72 312.00,289.90 291.24,288.46 286.14,258.36 309.00,251.31 Z" />
-			        <path id="Dogear" d="M 394.00,46.00 C 394.00,46.00 394.00,164.00 394.00,164.00 394.00,164.00 514.00,165.00 514.00,165.00" />
-    			    <path id="RBracket" d="M 412.00,183.00 C 412.00,183.00 440.00,183.00 440.00,205.00 440.00,205.00 440.00,247.00 440.00,247.00 440.00,270.00 476.00,270.00 476.00,270.00 476.00,270.00 440.00,270.00 440.00,291.00 440.00,291.00 440.00,336.00 440.00,336.00 440.00,361.00 412.00,361.00 412.00,361.00" />
-	    		    <path id="TargetSights" d="M 215.00,270.00 C 215.00,270.00 281.75,270.00 281.75,270.00M 313.00,172.00 C 313.00,172.00 313.00,238.00 313.00,238.00M 413.00,270.00 C 413.00,270.00 345.50,270.00 345.50,270.00M 313.00,369.00 C 313.00,369.00 313.00,302.75 313.00,302.75" />
-		    	    <path id="LBracket" d="M 214.00,183.00 C 214.00,183.00 186.00,183.00 186.00,205.00 186.00,205.00 186.00,247.00 186.00,247.00 186.00,270.00 150.00,270.00 150.00,270.00 150.00,270.00 186.00,270.00 186.00,291.00 186.00,291.00 186.00,336.00 186.00,336.00 186.00,361.00 214.00,361.00 214.00,361.00" />
-			        <path id="Page" d="M 107.00,374.00 C 107.00,374.00 107.00,40.00 107.00,40.00 107.00,40.00 398.00,40.00 398.00,40.00 398.00,40.00 518.00,161.00 518.00,161.00 518.00,161.00 518.00,374.00 518.00,374.00" />
+                    <path id="TargetBullseye" d="M 309.00,251.31 C 311.22,251.17 312.72,250.94 315.00,251.31 340.35,252.86 338.08,291.72 312.00,289.90 291.24,288.46 286.14,258.36 309.00,251.31 Z" />
+                    <path id="Dogear" d="M 394.00,46.00 C 394.00,46.00 394.00,164.00 394.00,164.00 394.00,164.00 514.00,165.00 514.00,165.00" />
+                    <path id="RBracket" d="M 412.00,183.00 C 412.00,183.00 440.00,183.00 440.00,205.00 440.00,205.00 440.00,247.00 440.00,247.00 440.00,270.00 476.00,270.00 476.00,270.00 476.00,270.00 440.00,270.00 440.00,291.00 440.00,291.00 440.00,336.00 440.00,336.00 440.00,361.00 412.00,361.00 412.00,361.00" />
+                    <path id="TargetSights" d="M 215.00,270.00 C 215.00,270.00 281.75,270.00 281.75,270.00M 313.00,172.00 C 313.00,172.00 313.00,238.00 313.00,238.00M 413.00,270.00 C 413.00,270.00 345.50,270.00 345.50,270.00M 313.00,369.00 C 313.00,369.00 313.00,302.75 313.00,302.75" />
+                    <path id="LBracket" d="M 214.00,183.00 C 214.00,183.00 186.00,183.00 186.00,205.00 186.00,205.00 186.00,247.00 186.00,247.00 186.00,270.00 150.00,270.00 150.00,270.00 150.00,270.00 186.00,270.00 186.00,291.00 186.00,291.00 186.00,336.00 186.00,336.00 186.00,361.00 214.00,361.00 214.00,361.00" />
+                    <path id="Page" d="M 107.00,374.00 C 107.00,374.00 107.00,40.00 107.00,40.00 107.00,40.00 398.00,40.00 398.00,40.00 398.00,40.00 518.00,161.00 518.00,161.00 518.00,161.00 518.00,374.00 518.00,374.00" />
 		        </g>
     	    </symbol>
             <use href="#FirstFill" style="stroke:none; fill:currentcolor;" />
             <use href="#FirstDraw" style="stroke:currentcolor; stroke-width:20px; fill:none;" />
             <use href="#CutsTarget" style="stroke:var(--ytd-searchbox-background); stroke-width:40px; fill:none;" />
             <use href="#CutsCSS" style="stroke:none; fill:var(--ytd-searchbox-background);" />
-            <use href="#SecondDraw" style="stroke:currentcolor; stroke-width:20px; fill:none;" />
+            <use href="#SecondDraw" style="stroke:currentcolor; stroke-width:20px; fill:none; stroke-linecap:round;" />
             </svg>
         </div>
     `;
     WhitelistButton.innerHTML = `
         <svg xmlns="http://www.w3.org/2000/svg" width="25px" height="25px" viewBox="0 0 25 34">
-            <style> #Whitelist path {fill:none; stroke:currentcolor; stroke-width:2;}</style>
-            <path id="fingers" d="M 9.13,18.12 C 9.13,18.12 11.10,18.79 11.10,18.79 11.10,18.79 18.07,18.79 18.34,18.79 19.68,18.79 19.98,18.12 19.98,17.62 19.98,17.62 21.63,10.43 21.63,10.14 21.63,8.65 19.98,8.65 19.98,8.65" />
-            <path id="thumb" d="M 8.63,9.98 C 8.63,9.98 10.94,6.48 10.94,6.48 10.94,6.48 10.94,5.24 10.94,4.49 11.31,2.83 12.69,2.83 12.91,2.83 14.58,2.47 15.19,4.28 15.38,4.49 15.87,5.15 15.87,6.23 15.87,6.48 16.14,7.00 15.38,8.65 15.38,8.65 15.38,8.65 19.98,8.65 19.98,8.65" />
+            <style>
+                #Whitelist {fill:none; stroke:currentcolor; stroke-width:2;}
+                #Whitelist .thin {fill:none; stroke:currentcolor; stroke-width:1; stroke-linecap:round;}
+            </style>
+            <path class="thin" id="fingers" d="M 9.13,18.12 C 9.13,18.12 11.10,18.79 11.10,18.79 11.10,18.79 18.07,18.79 18.34,18.79 19.68,18.79 19.98,18.12 19.98,17.62 19.98,17.62 21.63,10.43 21.63,10.14 21.63,8.65 19.98,8.65 19.98,8.65" />
+            <path class="thin" id="thumb" d="M 8.63,9.98 C 8.63,9.98 10.94,6.48 10.94,6.48 10.94,6.48 10.94,5.24 10.94,4.49 11.31,2.83 12.69,2.83 12.91,2.83 14.58,2.47 15.19,4.28 15.38,4.49 15.87,5.15 15.87,6.23 15.87,6.48 16.14,7.00 15.38,8.65 15.38,8.65 15.38,8.65 19.98,8.65 19.98,8.65" />
             <path id="line0" d="M 5.55,30.18 C 5.55,30.18 19.74,30.18 19.74,30.18" />
             <path id="line1" d="M 5.55,26.10 C 5.55,26.10 19.74,26.10 19.74,26.10" />
             <path id="line2" d="M 5.55,22.03 C 5.55,22.03 19.74,22.03 19.74,22.03" />
-            <path id="wrist" d="M 4.57,9.98 C 5.34,9.68 6.94,9.79 7.81,9.81 8.16,9.82 8.60,9.80 8.87,10.08 9.13,10.35 9.12,10.78 9.13,11.14 9.13,11.14 9.13,17.29 9.13,17.29 9.13,17.71 9.18,18.37 8.87,18.69 8.55,19.01 7.90,18.95 7.48,18.95 7.48,18.95 5.51,18.95 5.51,18.95 4.48,18.93 4.21,18.67 4.19,17.62 4.19,17.62 4.19,12.30 4.19,12.30 4.19,11.52 4.02,10.58 4.57,9.98 Z" />
-            <path id="paper" d="M 2.71,1.21 C 2.71,1.21 4.69,1.16 4.69,1.16 4.69,1.16 8.14,1.16 8.14,1.16 8.14,1.16 18.91,1.16 18.91,1.16 18.91,1.16 21.88,1.16 21.88,1.16 22.34,1.16 22.71,1.17 23.11,1.47 23.63,1.86 23.68,2.39 23.68,2.99 23.68,2.99 23.68,25.85 23.68,25.85 23.68,25.85 23.68,29.93 23.68,29.93 23.68,30.49 23.76,31.43 23.53,31.92 23.19,32.64 22.58,32.75 21.88,32.75 21.88,32.75 6.25,32.75 6.25,32.75 6.25,32.75 3.29,32.75 3.29,32.75 2.83,32.75 2.43,32.71 2.06,32.39 1.60,31.99 1.56,31.49 1.56,30.92  1.56,30.92 1.56,8.31 1.56,8.31 1.56,8.31 1.56,2.83 1.56,2.83 1.57,1.97 1.88,1.46 2.71,1.21 Z" />
+            <path class="thin" id="wrist" d="M 4.57,9.98 C 5.34,9.68 6.94,9.79 7.81,9.81 8.16,9.82 8.60,9.80 8.87,10.08 9.13,10.35 9.12,10.78 9.13,11.14 9.13,11.14 9.13,17.29 9.13,17.29 9.13,17.71 9.18,18.37 8.87,18.69 8.55,19.01 7.90,18.95 7.48,18.95 7.48,18.95 5.51,18.95 5.51,18.95 4.48,18.93 4.21,18.67 4.19,17.62 4.19,17.62 4.19,12.30 4.19,12.30 4.19,11.52 4.02,10.58 4.57,9.98 Z" />
+            <path class="thin" id="paper" d="M 2.71,1.21 C 2.71,1.21 4.69,1.16 4.69,1.16 4.69,1.16 8.14,1.16 8.14,1.16 8.14,1.16 18.91,1.16 18.91,1.16 18.91,1.16 21.88,1.16 21.88,1.16 22.34,1.16 22.71,1.17 23.11,1.47 23.63,1.86 23.68,2.39 23.68,2.99 23.68,2.99 23.68,25.85 23.68,25.85 23.68,25.85 23.68,29.93 23.68,29.93 23.68,30.49 23.76,31.43 23.53,31.92 23.19,32.64 22.58,32.75 21.88,32.75 21.88,32.75 6.25,32.75 6.25,32.75 6.25,32.75 3.29,32.75 3.29,32.75 2.83,32.75 2.43,32.71 2.06,32.39 1.60,31.99 1.56,31.49 1.56,30.92  1.56,30.92 1.56,8.31 1.56,8.31 1.56,8.31 1.56,2.83 1.56,2.83 1.57,1.97 1.88,1.46 2.71,1.21 Z" />
         </svg>
     `;
 
@@ -287,7 +285,6 @@
     }
     function removeWatchPageButtons() {
         removeElement(document.querySelector('#Whitelist'));
-        //removeElement(document.querySelector('#DEBUG_block'));
     }
     highlightButton.addEventListener('click', function() {
         const searchBarText = document.querySelector('input#search').value;
