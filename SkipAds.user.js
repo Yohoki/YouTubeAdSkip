@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YouTube Ad-Skip
 // @icon         https://www.gstatic.com/youtube/img/branding/favicon/favicon_192x192.png
-// @version      1.1.003
+// @version      1.2.000
 // @homepage     https://github.com/Yohoki/YouTubeAdSkip
 // @downloadURL  https://github.com/Yohoki/YouTubeAdSkip/raw/main/SkipAds.user.js
 // @updateURL    https://github.com/Yohoki/YouTubeAdSkip/raw/main/SkipAds.user.js
@@ -22,7 +22,9 @@
     // Initialization
     let State = "Listening";
     let BlockedInterval = 0;
+    let curTime;
     let watchPage = window.location.href.includes('watch');
+    let searchPage = window.location.href.includes('search');
     const searchBar = document.querySelector('ytd-searchbox[id="search"] div[id="container"]');
     const guideButton = document.querySelector('yt-icon-button#guide-button');
     //Debug button:
@@ -42,68 +44,149 @@
     if (watchPage) getCreatorID();
     let Whitelist = GM_getValue("whitelist", []);
 
+    const AdTypes = {
+        midVidAd: { // Mid-video ad break //
+            Selector: '.ad-showing video',
+            Message: 'Button found and clicked.',
+            Descriptor: 'button.ytp-ad-skip-button.ytp-button',
+            Action: 'midVidAd'
+        },
+        midVidPaper: { // Mid-Video Pop-up modal //
+            Selector: 'tp-yt-paper-dialog',
+            Message: '"Paper Dialogue" pop-up  dismissed.',
+            Descriptor: '#dismiss-button button',
+            Action: 'click'
+        },
+        homePageMasthead: { // Top of feed large banner ad, with or without a video. //
+            Selector: 'div#masthead-ad',
+            Message: 'Home Page banner ad removed. (MastHead)',
+            Descriptor: null,
+            Action: 'remove'
+        },
+        homePageInFeed: { // Homepage & Watch page, Small in-feed ads that look like a video. //
+            Selector: 'ytd-rich-item-renderer',
+            Message: '"Next Video" ad removed.',
+            Descriptor: 'ytd-ad-slot-renderer', // Null on watch page? Needs rechecked.
+            Action: 'remove'
+        },
+        homePageInFeedTV: { // Homepage, YouTubeTV mid-feed YTTV banner. //
+            Selector: 'ytd-primetime-promo-renderer',
+            Message: "YouTubeTV ad banner dismissed. (Primetime Promo)",
+            Descriptor: 'button',
+            Action: 'click'
+        },
+        homePageInFeedPrem: { // Homepage, YouTube mid-feed Premium banner. //
+            Selector: 'ytd-statement-banner-renderer',
+            Message: "YouTube Premium ad banner dismissed. (Statement Banner)",
+            Descriptor: 'button',
+            Action: 'click'
+        },
+        homePageBrandBanner: { // Homepage, YouTube mid-feed Brand banner. //
+            Selector: 'ytd-brand-video-singleton-renderer',
+            Message: "YouTube Premium ad banner dismissed. (Brand Video Banner)",
+            Descriptor: '#dismiss-button button',
+            Action: 'click'
+        },
+        homePageNudge: { // Homepage, YouTube mid-feed Brand banner. //
+            Selector: 'ytd-feed-nudge-renderer',
+            Message: "YouTube Nudge dismissed. (New to you in-feed)",
+            Descriptor: '#dismiss-button button',
+            Action: 'click'
+        },
+        searchPagePyv: { // Search Page, YouTube pre-feed ad. //
+            Selector: 'ytd-search-pyv-renderer',
+            Message: "Search page Pre-Feed ad hidden.",
+            Descriptor: null,
+            Action: 'remove'
+        },
+        searchPageAdSlot: { // Search Page in-feed. //
+            Selector: 'ytd-ad-slot-renderer',
+            Message: "Search Page in-feed ad hidden",
+            Descriptor: null,
+            Action: 'remove'
+        }
+    };
+
+    function handleAdElement(element, type) {
+        if (element) {
+            //console.debug(element);
+            //console.debug(element + " - " + type + " - " + AdTypes[type].Action);
+            switch (AdTypes[type].Action) {
+                case 'midVidAd':
+                    if (element.currentTime < element.duration) {
+                        console.log(curTime + " - AdSkip: An ad is currently Playing.");
+                        console.debug(element.src);
+                        element.currentTime = element.duration;
+                        console.log(curTime + " - AdSkip: Fast Forwarded ad to end.");
+                        BlockedInterval = 10;
+                    }
+                    // is clicking the button even needed now?
+                    if (!document.querySelector(AdTypes[type].Descriptor)) break;
+                    element = document;
+                    /*if (element.querySelector(AdTypes[type].Descriptor)) {
+                        //BlockedInterval = 10;
+                        //setColor();
+                        clickElement(element, AdTypes[type].Descriptor, AdTypes[type].Message);
+                    }
+                    break;*/
+                    // Fallthrough to click?
+                case 'click':
+                    clickElement(element, AdTypes[type].Descriptor, AdTypes[type].Message);
+                    break;
+                case 'hide':
+                    hideElement(element, AdTypes[type].Descriptor, AdTypes[type].Message);
+                    break;
+                case 'remove':
+                    removeElement(element, AdTypes[type].Descriptor, AdTypes[type].Message);
+                    break;
+                default:
+                    break;
+            }
+            setColor();
+        }
+    }
 
     // Function to handle the changes in the DOM
     function handleDOMChanges(mutationsList) {
         watchPage = window.location.href.includes('watch');
+        searchPage = window.location.href.includes('search');
         if (!watchPage) { removeWatchPageButtons(); }
         if (watchPage) { addWatchPageButtons(); }
         if (creatorIdInWhitelist() && watchPage) return;
-        const curTime = new Date(Date.now()).toLocaleTimeString('en-US');
+        curTime = new Date(Date.now()).toLocaleTimeString('en-US');
         for (let mutation of mutationsList) {
             if (mutation.type === 'childList') {
 
                 // Check if an ad is showing
-                const midVidAd = document.querySelector('.ad-showing video');
-                const midVidPaper = document.querySelector('tp-yt-paper-dialog');
-                const homePageMasthead = document.querySelectorAll('div#masthead-ad');
-                const homePageInFeed = document.querySelectorAll('ytd-rich-item-renderer');
-                const homePageInFeedTV = document.querySelector('ytd-primetime-promo-renderer');
-                const homePageInFeedPrem = document.querySelector('ytd-statement-banner-renderer');
-                const homePageBrandBanner = document.querySelector('ytd-brand-video-singleton-renderer');
-                const homePageNudge = document.querySelector('ytd-feed-nudge-renderer');
+                const midVidAd = document.querySelector(AdTypes.midVidAd.Selector);
+                const midVidPaper = document.querySelector(AdTypes.midVidPaper.Selector);
+                const homePageMasthead = document.querySelectorAll(AdTypes.homePageMasthead.Selector);
+                const homePageInFeed = document.querySelectorAll(AdTypes.homePageInFeed.Selector);
+                const homePageInFeedTV = document.querySelector(AdTypes.homePageInFeedTV.Selector);
+                const homePageInFeedPrem = document.querySelector(AdTypes.homePageInFeedPrem.Selector);
+                const homePageBrandBanner = document.querySelector(AdTypes.homePageBrandBanner.Selector);
+                const homePageNudge = document.querySelector(AdTypes.homePageNudge.Selector);
+                const searchPagePyv = document.querySelector(AdTypes.searchPagePyv.Selector);
+                const searchPageAdSlot = document.querySelectorAll(AdTypes.searchPageAdSlot.Selector);
 
-                if (midVidAd) { // Mid-video ad break //
-                    if (midVidAd.currentTime < midVidAd.duration) {
-                        console.log(curTime + " - AdSkip: An ad is currently Playing.");
-                        console.debug(midVidAd.src);
-                        midVidAd.currentTime = midVidAd.duration;
-                        console.log(curTime + " - AdSkip: Fast Forwarded ad to end.");
-                        BlockedInterval = 10;
-                        setColor();
-                    }
-                    const skipButton = document.querySelector('button.ytp-ad-skip-button.ytp-button');
-                    if (skipButton) {
-                        BlockedInterval = 10;
-                        setColor();
-                        clickElement(skipButton, null, 'Button found and clicked.');
-                    }
+                if (watchPage) {
+                    homePageInFeed.forEach(temp => handleAdElement(temp, 'homePageInFeed') );
+                    handleAdElement(midVidAd, 'midVidAd');
                 }
-                if (homePageMasthead.length > 0) { // Top of feed large banner ad, with or without a video. //
-                    homePageMasthead.forEach(temp => removeElement(temp, "Home Page banner ad removed. (MastHead)"));
+                if (searchPage) {
+                    handleAdElement(searchPagePyv, 'searchPagePyv');
+                    searchPageAdSlot.forEach(temp => handleAdElement(temp, 'searchPageAdSlot') );
                 }
-                if (midVidPaper) { // Mid-Video Pop-up modal //
-                    clickElement(midVidPaper, '#dismiss-button button', '"Paper Dialogue" pop-up  dismissed.');
-                }
-                if (homePageInFeed.length>0 && !watchPage) { // Homepage, Small in-feed ads that look like a video. //
+                if (!watchPage && !searchPage) {
                     homePageInFeed.forEach(temp => {
-                        if (temp.querySelector('ytd-ad-slot-renderer')) { removeElement(temp, "Home Page in-feed ad removed."); }
+                        if (temp.querySelector(AdTypes.homePageInFeed.Descriptor)) handleAdElement(temp, 'homePageInFeed')
                     });
-                }
-                if (homePageInFeed.length>0 && watchPage) { // Watch Page, in-feed ad that look like a video. //
-                    homePageInFeed.forEach((temp) => removeElement(temp, '"Next Video" ad removed.'));
-                }
-                if (homePageInFeedTV) { // Homepage, YouTubeTV mid-feed YTTV banner. //
-                    clickElement(homePageInFeedTV, 'button', "YouTubeTV ad banner dismissed. (Primetime Promo)");
-                }
-                if (homePageInFeedPrem) { // Homepage, YouTube mid-feed Premium banner. //
-                    clickElement(homePageInFeedPrem,'button',"YouTube Premium ad banner dismissed. (Statement Banner)");
-                }
-                if (homePageBrandBanner) { // Homepage, YouTube mid-feed Brand banner. //
-                    clickElement(homePageBrandBanner,'#dismiss-button button',"YouTube Premium ad banner dismissed. (Brand Video Banner)");
-                }
-                if (homePageNudge) { // Homepage, YouTube mid-feed Brand banner. //
-                    clickElement(homePageNudge,'#dismiss-button button',"YouTube Nudge dismissed. (New to you in-feed)");
+                    handleAdElement(midVidPaper, 'midVidPaper');
+                    homePageMasthead.forEach(temp => handleAdElement(temp, 'homePageMasthead') );
+                    handleAdElement(homePageInFeedTV, 'homePageInFeedTV');
+                    handleAdElement(homePageInFeedPrem, 'homePageInFeedPrem');
+                    handleAdElement(homePageBrandBanner, 'homePageBrandBanner');
+                    handleAdElement(homePageNudge, 'homePageNudge');
                 }
             }
         }
@@ -113,25 +196,24 @@
         descriptor === null ? Element.click() : Element.querySelector(descriptor).click();
         removeElement(Element);
         BlockedInterval = 10;
-        setColor();
 
         if (!Msg) { return; }
         const curTime = new Date(Date.now()).toLocaleTimeString('en-US');
         console.log(curTime + " - AdSkip: " + Msg);
     }
-    function removeElement(Element, Msg) {
+    function removeElement(Element, descriptor, Msg) {
         if (!Element) return;
-        Element.remove();
+        descriptor === null ? Element.remove() : Element.querySelector(descriptor).remove();
+        BlockedInterval = 10;
         if (!Msg) { return; }
         const curTime = new Date(Date.now()).toLocaleTimeString('en-US');
         console.log(curTime + " - AdSkip: " + Msg);
     }
-    function hideElement(Element, Msg) {
+    function hideElement(Element, descriptor, Msg) {
+        if (descriptor !== null) Element = Element.querySelector(descriptor);
         if (Element.style.display === 'none') { return; }
         Element.style.display = 'none';
         BlockedInterval = 10;
-        setColor();
-
         if (!Msg) { return; }
         const curTime = new Date(Date.now()).toLocaleTimeString('en-US');
         console.log(curTime + " - AdSkip: " + Msg);
