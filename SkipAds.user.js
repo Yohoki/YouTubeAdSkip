@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YouTube Ad-Skip
 // @icon         https://www.gstatic.com/youtube/img/branding/favicon/favicon_192x192.png
-// @version      1.2.001
+// @version      1.2.002
 // @homepage     https://github.com/Yohoki/YouTubeAdSkip
 // @downloadURL  https://github.com/Yohoki/YouTubeAdSkip/raw/main/SkipAds.user.js
 // @updateURL    https://github.com/Yohoki/YouTubeAdSkip/raw/main/SkipAds.user.js
@@ -26,7 +26,7 @@
     let watchPage = window.location.href.includes('watch');
     let searchPage = window.location.href.includes('search');
     const searchBar = document.querySelector('ytd-searchbox[id="search"] div[id="container"]');
-    const guideButton = document.querySelector('yt-icon-button#guide-button');
+    const guideButton = document.querySelector('#start yt-icon-button#guide-button');
     //Debug button:
     const debugButton = document.createElement('div');
     const highlightButton = document.createElement('div');
@@ -48,25 +48,25 @@
         midVidAd: { // Mid-video ad break //
             Selector: '.ad-showing video',
             Message: 'Button found and clicked.',
-            Descriptor: 'button.ytp-ad-skip-button.ytp-button',
+            Descriptor: '.ytp-ad-skip-button-slot button', // Oddity: Descriptor node not contained inside Selector node.
             Action: 'midVidAd'
         },
         midVidPaper: { // Mid-Video Pop-up modal //
             Selector: 'tp-yt-paper-dialog',
-            Message: '"Paper Dialogue" pop-up  dismissed.',
+            Message: '"Paper Dialogue" pop-up dismissed.',
             Descriptor: '#dismiss-button button',
             Action: 'click'
+        },
+        watchPlayerAds: {
+            Selector: '#player-ads',
+            Message: '"Companion Ad" top-of-feed removed',
+            Descriptor: null,
+            Action: 'remove'
         },
         homePageMasthead: { // Top of feed large banner ad, with or without a video. //
             Selector: 'div#masthead-ad',
             Message: 'Home Page banner ad removed. (MastHead)',
             Descriptor: null,
-            Action: 'remove'
-        },
-        homePageInFeed: { // Homepage & Watch page, Small in-feed ads that look like a video. //
-            Selector: 'ytd-rich-item-renderer',
-            Message: 'In-Feed ad removed.',
-            Descriptor: 'ytd-ad-slot-renderer', // Null on watch page? Needs rechecked.
             Action: 'remove'
         },
         homePageInFeedTV: { // Homepage, YouTubeTV mid-feed YTTV banner. //
@@ -99,38 +99,26 @@
             Descriptor: null,
             Action: 'remove'
         },
-        searchPageAdSlot: { // Search Page in-feed. //
+        inFeedAdSlot: { // Search Page in-feed. //
             Selector: 'ytd-ad-slot-renderer',
-            Message: "Search Page in-feed ad hidden",
+            Message: '"Ad Slot" in-feed ad hidden',
             Descriptor: null,
             Action: 'remove'
         }
     };
 
     function handleAdElement(element, type, descriptorOverride = false, descriptor = null) {
-        const Descriptor = descriptorOverride ? descriptor : AdTypes[type].Descriptor;
+        var Descriptor = descriptorOverride ? descriptor : AdTypes[type].Descriptor;
         if (element) {
-            //console.debug(element);
-            //console.debug(element + " - " + type + " - " + AdTypes[type].Action);
             switch (AdTypes[type].Action) {
                 case 'midVidAd':
-                    if (element.currentTime < element.duration) {
-                        console.log(curTime + " - AdSkip: An ad is currently Playing.");
-                        console.debug(element.src);
-                        element.currentTime = element.duration;
-                        console.log(curTime + " - AdSkip: Fast Forwarded ad to end.");
-                        BlockedInterval = 10;
-                    }
-                    // is clicking the button even needed now?
-                    //if (!document.querySelector(Descriptor)) break;
-                    //element = document;
-                    if (element.querySelector(Descriptor)) {
-                        //BlockedInterval = 10;
-                        //setColor();
-                        clickElement(element, Descriptor, AdTypes[type].Message);
-                    }
+                    if (element.currentTime == element.duration) return;
+                    console.log(curTime + " - AdSkip: An ad is currently Playing.");
+                    console.debug(element.src);
+                    element.currentTime = element.duration;
+                    console.log(curTime + " - AdSkip: Fast Forwarded ad to end.");
+                    BlockedInterval = 10;
                     break;
-                    // Fallthrough to click?
                 case 'click':
                     clickElement(element, Descriptor, AdTypes[type].Message);
                     break;
@@ -151,8 +139,8 @@
     function handleDOMChanges(mutationsList) {
         watchPage = window.location.href.includes('watch');
         searchPage = window.location.href.includes('search');
-        if (!watchPage) { removeWatchPageButtons(); }
-        if (watchPage) { addWatchPageButtons(); }
+        if (!watchPage) removeWatchPageButtons();
+        addWatchPageButtons();
         if (creatorIdInWhitelist() && watchPage) return;
         curTime = new Date(Date.now()).toLocaleTimeString('en-US');
         for (let mutation of mutationsList) {
@@ -161,29 +149,26 @@
                 // Check if an ad is showing
                 const midVidAd = document.querySelector(AdTypes.midVidAd.Selector);
                 const midVidPaper = document.querySelector(AdTypes.midVidPaper.Selector);
-                const homePageMasthead = document.querySelectorAll(AdTypes.homePageMasthead.Selector);
-                const homePageInFeed = document.querySelectorAll(AdTypes.homePageInFeed.Selector);
+                const watchPlayerAds = document.querySelector(AdTypes.watchPlayerAds.Selector);
+                const homePageMastheads = document.querySelectorAll(AdTypes.homePageMasthead.Selector);
                 const homePageInFeedTV = document.querySelector(AdTypes.homePageInFeedTV.Selector);
                 const homePageInFeedPrem = document.querySelector(AdTypes.homePageInFeedPrem.Selector);
                 const homePageBrandBanner = document.querySelector(AdTypes.homePageBrandBanner.Selector);
                 const homePageNudge = document.querySelector(AdTypes.homePageNudge.Selector);
                 const searchPagePyv = document.querySelector(AdTypes.searchPagePyv.Selector);
-                const searchPageAdSlot = document.querySelectorAll(AdTypes.searchPageAdSlot.Selector);
+                const inFeedAdSlots = document.querySelectorAll(AdTypes.inFeedAdSlot.Selector);
 
+                inFeedAdSlots.forEach(temp => handleAdElement(temp, 'inFeedAdSlot') );
                 if (watchPage) {
-                    homePageInFeed.forEach(temp => handleAdElement(temp, 'homePageInFeed') );
                     handleAdElement(midVidAd, 'midVidAd');
+                    handleAdElement(watchPlayerAds, 'watchPlayerAds');
+                    handleAdElement(midVidPaper, 'midVidPaper');
                 }
                 if (searchPage) {
                     handleAdElement(searchPagePyv, 'searchPagePyv');
-                    searchPageAdSlot.forEach(temp => handleAdElement(temp, 'searchPageAdSlot') );
                 }
                 if (!watchPage && !searchPage) {
-                    homePageInFeed.forEach(temp => {
-                        if (temp.querySelector(AdTypes.homePageInFeed.Descriptor)) handleAdElement(temp, 'homePageInFeed', true)
-                    });
-                    handleAdElement(midVidPaper, 'midVidPaper');
-                    homePageMasthead.forEach(temp => handleAdElement(temp, 'homePageMasthead') );
+                    homePageMastheads.forEach(temp => handleAdElement(temp, 'homePageMasthead') );
                     handleAdElement(homePageInFeedTV, 'homePageInFeedTV');
                     handleAdElement(homePageInFeedPrem, 'homePageInFeedPrem');
                     handleAdElement(homePageBrandBanner, 'homePageBrandBanner');
@@ -197,26 +182,23 @@
         descriptor === null ? Element.click() : Element.querySelector(descriptor).click();
         removeElement(Element);
         BlockedInterval = 10;
-
-        if (!Msg) { return; }
-        const curTime = new Date(Date.now()).toLocaleTimeString('en-US');
+        if (!Msg) return;
+        //const curTime = new Date(Date.now()).toLocaleTimeString('en-US');
         console.log(curTime + " - AdSkip: " + Msg);
     }
     function removeElement(Element, descriptor, Msg) {
         if (!Element) return;
         descriptor === null ? Element.remove() : Element.querySelector(descriptor).remove();
         BlockedInterval = 10;
-        if (!Msg) { return; }
-        const curTime = new Date(Date.now()).toLocaleTimeString('en-US');
+        if (!Msg) return;
         console.log(curTime + " - AdSkip: " + Msg);
     }
     function hideElement(Element, descriptor, Msg) {
         if (descriptor !== null) Element = Element.querySelector(descriptor);
-        if (Element.style.display === 'none') { return; }
+        if (Element.style.display === 'none') return;
         Element.style.display = 'none';
         BlockedInterval = 10;
-        if (!Msg) { return; }
-        const curTime = new Date(Date.now()).toLocaleTimeString('en-US');
+        if (!Msg) return;
         console.log(curTime + " - AdSkip: " + Msg);
     }
     function DEBUG_highlightElement(Element) {
@@ -238,7 +220,6 @@
             menuBar.title = "AdSkip: Ad successfully skipped.";
             BlockedInterval--;
             return;
-            //console.debug("blockedinterval: " + BlockedInterval);
         }
         switch (State) {
             case "Listening":
@@ -260,10 +241,10 @@
         if (creatorIdInWhitelist()) {
             WhitelistBtn.style.color = "#00FF00";
             WhitelistBtn.title = "AdSkip: Creator is in whitelist. Not skipping ads.";
-        } else {
-            WhitelistBtn.style.color = "#ff0000";
-            WhitelistBtn.title = "AdSkip: Creator is not in whitelist. Skipping ads.";
+            return;
         }
+        WhitelistBtn.style.color = "#ff0000";
+        WhitelistBtn.title = "AdSkip: Creator is not in whitelist. Skipping ads.";
     }
 
     // MutationObserver to watch for changes in the DOM
@@ -277,8 +258,8 @@
     function getCreatorID() {
         if (!watchPage) return;
         let creatorId = document.querySelector('a#header');
-        if (creatorId) { creatorID = creatorId.getAttribute("href");
-        } else { setTimeout(getCreatorID, 1000); }
+        if (!creatorId) setTimeout(getCreatorID, 1000); return;
+        creatorID = creatorId.getAttribute("href");
     }
 
     function creatorIdInWhitelist() {
@@ -355,22 +336,16 @@
     `;
 
     function addButtons() {
-        if (searchBar && debugMode) {
-            searchBar.appendChild(debugButton);
-        }
-        if (searchBar && debugMode) {// && watchPage) {
-            searchBar.appendChild(highlightButton);
-        }
+        if (!debugMode || !searchBar) return;
+        searchBar.appendChild(debugButton);
+        searchBar.appendChild(highlightButton);
     }
     function addWatchPageButtons() {
-        if (document.querySelector('div#Whitelist') || !watchPage) return;
-        if (searchBar && watchPage) {
-            guideButton.after(WhitelistButton);
-        }
+        if (!watchPage || !searchBar || !guideButton) return;
+        if (!document.querySelector('div#Whitelist')) guideButton.after(WhitelistButton);
     }
-    function removeWatchPageButtons() {
-        removeElement(document.querySelector('#Whitelist'));
-    }
+    function removeWatchPageButtons() { removeElement(document.querySelector('#Whitelist'),null,null); }
+
     highlightButton.addEventListener('click', function() {
         const searchBarText = document.querySelector('input#search').value;
         const Elements = document.querySelectorAll(searchBarText)
@@ -380,8 +355,8 @@
         });
     });
     debugButton.addEventListener('click', function() {
-        var e = document.querySelectorAll('#movie_player');// button');
-        e.forEach( b => console.debug(b) );
+        var e = document.querySelectorAll('#movie_player');
+        e.forEach( b => console.debug(b.innerHTML) );
     });
     WhitelistButton.addEventListener('click', function() {
         if (creatorID == null) return;
