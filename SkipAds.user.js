@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YouTube Ad-Skip
 // @icon         https://www.gstatic.com/youtube/img/branding/favicon/favicon_192x192.png
-// @version      1.2.000
+// @version      1.2.001
 // @homepage     https://github.com/Yohoki/YouTubeAdSkip
 // @downloadURL  https://github.com/Yohoki/YouTubeAdSkip/raw/main/SkipAds.user.js
 // @updateURL    https://github.com/Yohoki/YouTubeAdSkip/raw/main/SkipAds.user.js
@@ -65,7 +65,7 @@
         },
         homePageInFeed: { // Homepage & Watch page, Small in-feed ads that look like a video. //
             Selector: 'ytd-rich-item-renderer',
-            Message: '"Next Video" ad removed.',
+            Message: 'In-Feed ad removed.',
             Descriptor: 'ytd-ad-slot-renderer', // Null on watch page? Needs rechecked.
             Action: 'remove'
         },
@@ -107,7 +107,8 @@
         }
     };
 
-    function handleAdElement(element, type) {
+    function handleAdElement(element, type, descriptorOverride = false, descriptor = null) {
+        const Descriptor = descriptorOverride ? descriptor : AdTypes[type].Descriptor;
         if (element) {
             //console.debug(element);
             //console.debug(element + " - " + type + " - " + AdTypes[type].Action);
@@ -121,23 +122,23 @@
                         BlockedInterval = 10;
                     }
                     // is clicking the button even needed now?
-                    if (!document.querySelector(AdTypes[type].Descriptor)) break;
-                    element = document;
-                    /*if (element.querySelector(AdTypes[type].Descriptor)) {
+                    //if (!document.querySelector(Descriptor)) break;
+                    //element = document;
+                    if (element.querySelector(Descriptor)) {
                         //BlockedInterval = 10;
                         //setColor();
-                        clickElement(element, AdTypes[type].Descriptor, AdTypes[type].Message);
+                        clickElement(element, Descriptor, AdTypes[type].Message);
                     }
-                    break;*/
+                    break;
                     // Fallthrough to click?
                 case 'click':
-                    clickElement(element, AdTypes[type].Descriptor, AdTypes[type].Message);
+                    clickElement(element, Descriptor, AdTypes[type].Message);
                     break;
                 case 'hide':
-                    hideElement(element, AdTypes[type].Descriptor, AdTypes[type].Message);
+                    hideElement(element, Descriptor, AdTypes[type].Message);
                     break;
                 case 'remove':
-                    removeElement(element, AdTypes[type].Descriptor, AdTypes[type].Message);
+                    removeElement(element, Descriptor, AdTypes[type].Message);
                     break;
                 default:
                     break;
@@ -179,7 +180,7 @@
                 }
                 if (!watchPage && !searchPage) {
                     homePageInFeed.forEach(temp => {
-                        if (temp.querySelector(AdTypes.homePageInFeed.Descriptor)) handleAdElement(temp, 'homePageInFeed')
+                        if (temp.querySelector(AdTypes.homePageInFeed.Descriptor)) handleAdElement(temp, 'homePageInFeed', true)
                     });
                     handleAdElement(midVidPaper, 'midVidPaper');
                     homePageMasthead.forEach(temp => handleAdElement(temp, 'homePageMasthead') );
@@ -379,7 +380,8 @@
         });
     });
     debugButton.addEventListener('click', function() {
-        console.debug(watchPage);
+        var e = document.querySelectorAll('#movie_player');// button');
+        e.forEach( b => console.debug(b) );
     });
     WhitelistButton.addEventListener('click', function() {
         if (creatorID == null) return;
