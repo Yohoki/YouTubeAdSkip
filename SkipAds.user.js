@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YouTube Ad-Skip
 // @icon         https://www.gstatic.com/youtube/img/branding/favicon/favicon_192x192.png
-// @version      1.2.002
+// @version      1.2.003
 // @homepage     https://github.com/Yohoki/YouTubeAdSkip
 // @downloadURL  https://github.com/Yohoki/YouTubeAdSkip/raw/main/SkipAds.user.js
 // @updateURL    https://github.com/Yohoki/YouTubeAdSkip/raw/main/SkipAds.user.js
@@ -47,9 +47,15 @@
     const AdTypes = {
         midVidAd: { // Mid-video ad break //
             Selector: '.ad-showing video',
-            Message: 'Button found and clicked.',
+            Message: null,//'Button found and clicked. (Mid-Vid Ad)',
             Descriptor: '.ytp-ad-skip-button-slot button', // Oddity: Descriptor node not contained inside Selector node.
             Action: 'midVidAd'
+        },
+        midVidAdButton: { // Mid-video ad break //
+            Selector: '.ytp-ad-skip-button-slot button',
+            Message: 'Button found and clicked. (Mid-Vid Ad)',
+            Descriptor: null,
+            Action: 'click'
         },
         midVidPaper: { // Mid-Video Pop-up modal //
             Selector: 'tp-yt-paper-dialog',
@@ -112,10 +118,9 @@
         if (element) {
             switch (AdTypes[type].Action) {
                 case 'midVidAd':
-                    if (element.currentTime == element.duration) return;
+                    if (!element.duration || element.currentTime >= Math.floor(element.duration)) break;
                     console.log(curTime + " - AdSkip: An ad is currently Playing.");
-                    console.debug(element.src);
-                    element.currentTime = element.duration;
+                    element.currentTime = element.duration + 1;
                     console.log(curTime + " - AdSkip: Fast Forwarded ad to end.");
                     BlockedInterval = 10;
                     break;
@@ -148,6 +153,7 @@
 
                 // Check if an ad is showing
                 const midVidAd = document.querySelector(AdTypes.midVidAd.Selector);
+                const midVidAdButton = document.querySelector(AdTypes.midVidAdButton.Selector);
                 const midVidPaper = document.querySelector(AdTypes.midVidPaper.Selector);
                 const watchPlayerAds = document.querySelector(AdTypes.watchPlayerAds.Selector);
                 const homePageMastheads = document.querySelectorAll(AdTypes.homePageMasthead.Selector);
@@ -161,6 +167,7 @@
                 inFeedAdSlots.forEach(temp => handleAdElement(temp, 'inFeedAdSlot') );
                 if (watchPage) {
                     handleAdElement(midVidAd, 'midVidAd');
+                    handleAdElement(midVidAdButton, 'midVidAdButton');
                     handleAdElement(watchPlayerAds, 'watchPlayerAds');
                     handleAdElement(midVidPaper, 'midVidPaper');
                 }
@@ -179,16 +186,17 @@
     }
 
     function clickElement(Element, descriptor, Msg) {
-        descriptor === null ? Element.click() : Element.querySelector(descriptor).click();
+        try { descriptor === null ? Element.click() : Element.querySelector(descriptor).click(); }
+        catch {} //Suppress console.error() in case of button not existing.
         removeElement(Element);
         BlockedInterval = 10;
         if (!Msg) return;
-        //const curTime = new Date(Date.now()).toLocaleTimeString('en-US');
         console.log(curTime + " - AdSkip: " + Msg);
     }
     function removeElement(Element, descriptor, Msg) {
         if (!Element) return;
-        descriptor === null ? Element.remove() : Element.querySelector(descriptor).remove();
+        try { descriptor === null ? Element.remove() : Element.querySelector(descriptor).remove(); }
+        catch {} //Suppress console.error() in case of button not existing.
         BlockedInterval = 10;
         if (!Msg) return;
         console.log(curTime + " - AdSkip: " + Msg);
@@ -215,6 +223,7 @@
     // Set Menu Bar color for status reporting.
     function setColor() {
         const menuBar = document.querySelector('#guide-icon');
+        if (!menuBar) { setTimeout(setColor, 100); return; }
         if (BlockedInterval>0) {
             menuBar.style.color = '#00FF00';
             menuBar.title = "AdSkip: Ad successfully skipped.";
@@ -258,7 +267,7 @@
     function getCreatorID() {
         if (!watchPage) return;
         let creatorId = document.querySelector('a#header');
-        if (!creatorId) setTimeout(getCreatorID, 1000); return;
+        if (!creatorId) { setTimeout(getCreatorID, 1000); return; }
         creatorID = creatorId.getAttribute("href");
     }
 
