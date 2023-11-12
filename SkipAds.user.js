@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YouTube Ad-Skip
 // @icon         https://www.gstatic.com/youtube/img/branding/favicon/favicon_192x192.png
-// @version      1.3.002
+// @version      1.3.003
 // @homepage     https://github.com/Yohoki/YouTubeAdSkip
 // @downloadURL  https://github.com/Yohoki/YouTubeAdSkip/raw/main/SkipAds.user.js
 // @updateURL    https://github.com/Yohoki/YouTubeAdSkip/raw/main/SkipAds.user.js
@@ -45,6 +45,8 @@
     let creatorID = null;
     if (watchPage) getCreatorID();
     let Whitelist = GM_getValue("whitelist", []);
+
+    setInterval(setColor, 100);
 
     const AdTypes = {
         midVidAd: { // Mid-video ad break //
@@ -115,6 +117,13 @@
         }
     };
 
+    // MutationObserver to watch for changes in the DOM
+    const observer = new MutationObserver(handleDOMChanges);
+    const observerOptions = { childList: true, subtree: true, };
+    observer.observe(document.body, observerOptions);
+    // Call the handling function once for the existing nodes
+    handleDOMChanges([{ type: 'childList', addedNodes: [document.body] }]);
+
     function handleAdElement(element, type, descriptorOverride = false, descriptor = null) {
         var Descriptor = descriptorOverride ? descriptor : type.Descriptor;
         if (!element) return;
@@ -154,9 +163,8 @@
             if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
                 mutation.addedNodes.forEach((addedNode) => {
                     if (addedNode instanceof HTMLElement) {
-                        //console.debug(addedNode);
                         Object.values(AdTypes).forEach (Type => {
-                            const matchedNodes = addedNode.querySelectorAll(Type.Selector)
+                            const matchedNodes = addedNode.querySelectorAll(Type.Selector);
                             matchedNodes.forEach( node => handleAdElement(node, Type) );
                         });
                     }
@@ -237,13 +245,6 @@
         WhitelistBtn.title = "AdSkip: Creator is not in whitelist. Skipping ads.";
     }
 
-    // MutationObserver to watch for changes in the DOM
-    const observer = new MutationObserver(handleDOMChanges);
-    const observerOptions = { childList: true, subtree: true, };
-    observer.observe(document.body, observerOptions);
-
-    setInterval(setColor, 1000);
-
     function getSearchBar() {
         let searchBar = document.querySelector('ytd-searchbox[id="search"] div[id="container"]')
         if (!searchBar) { setTimeout(getSearchBar, 1); return; }
@@ -263,8 +264,7 @@
 
     function creatorIdInWhitelist() {
         if (!creatorID) getCreatorID();
-        if (Whitelist.includes(creatorID) && creatorID !== null) return true;
-        return false;
+        return Whitelist.includes(creatorID);
     }
 
     debugButton.innerHTML = `
