@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YouTube Ad-Skip
 // @icon         https://www.gstatic.com/youtube/img/branding/favicon/favicon_192x192.png
-// @version      1.2.003
+// @version      1.3.001
 // @homepage     https://github.com/Yohoki/YouTubeAdSkip
 // @downloadURL  https://github.com/Yohoki/YouTubeAdSkip/raw/main/SkipAds.user.js
 // @updateURL    https://github.com/Yohoki/YouTubeAdSkip/raw/main/SkipAds.user.js
@@ -63,7 +63,7 @@
             Descriptor: '#dismiss-button button',
             Action: 'click'
         },
-        watchPlayerAds: {
+        watchPlayerAd: {
             Selector: '#player-ads',
             Message: '"Companion Ad" top-of-feed removed',
             Descriptor: null,
@@ -114,9 +114,9 @@
     };
 
     function handleAdElement(element, type, descriptorOverride = false, descriptor = null) {
-        var Descriptor = descriptorOverride ? descriptor : AdTypes[type].Descriptor;
+        var Descriptor = descriptorOverride ? descriptor : type.Descriptor;
         if (element) {
-            switch (AdTypes[type].Action) {
+            switch (type.Action) {
                 case 'midVidAd':
                     if (!element.duration || element.currentTime >= Math.floor(element.duration)) break;
                     console.log(curTime + " - AdSkip: An ad is currently Playing.");
@@ -125,13 +125,13 @@
                     BlockedInterval = 10;
                     break;
                 case 'click':
-                    clickElement(element, Descriptor, AdTypes[type].Message);
+                    clickElement(element, Descriptor, type.Message);
                     break;
                 case 'hide':
-                    hideElement(element, Descriptor, AdTypes[type].Message);
+                    hideElement(element, Descriptor, type.Message);
                     break;
                 case 'remove':
-                    removeElement(element, Descriptor, AdTypes[type].Message);
+                    removeElement(element, Descriptor, type.Message);
                     break;
                 default:
                     break;
@@ -140,49 +140,29 @@
         }
     }
 
-    // Function to handle the changes in the DOM
     function handleDOMChanges(mutationsList) {
         watchPage = window.location.href.includes('watch');
         searchPage = window.location.href.includes('search');
+        curTime = new Date(Date.now()).toLocaleTimeString('en-US');
         if (!watchPage) removeWatchPageButtons();
         addWatchPageButtons();
         if (creatorIdInWhitelist() && watchPage) return;
-        curTime = new Date(Date.now()).toLocaleTimeString('en-US');
-        for (let mutation of mutationsList) {
-            if (mutation.type === 'childList') {
 
-                // Check if an ad is showing
-                const midVidAd = document.querySelector(AdTypes.midVidAd.Selector);
-                const midVidAdButton = document.querySelector(AdTypes.midVidAdButton.Selector);
-                const midVidPaper = document.querySelector(AdTypes.midVidPaper.Selector);
-                const watchPlayerAds = document.querySelector(AdTypes.watchPlayerAds.Selector);
-                const homePageMastheads = document.querySelectorAll(AdTypes.homePageMasthead.Selector);
-                const homePageInFeedTV = document.querySelector(AdTypes.homePageInFeedTV.Selector);
-                const homePageInFeedPrem = document.querySelector(AdTypes.homePageInFeedPrem.Selector);
-                const homePageBrandBanner = document.querySelector(AdTypes.homePageBrandBanner.Selector);
-                const homePageNudge = document.querySelector(AdTypes.homePageNudge.Selector);
-                const searchPagePyv = document.querySelector(AdTypes.searchPagePyv.Selector);
-                const inFeedAdSlots = document.querySelectorAll(AdTypes.inFeedAdSlot.Selector);
-
-                inFeedAdSlots.forEach(temp => handleAdElement(temp, 'inFeedAdSlot') );
-                if (watchPage) {
-                    handleAdElement(midVidAd, 'midVidAd');
-                    handleAdElement(midVidAdButton, 'midVidAdButton');
-                    handleAdElement(watchPlayerAds, 'watchPlayerAds');
-                    handleAdElement(midVidPaper, 'midVidPaper');
-                }
-                if (searchPage) {
-                    handleAdElement(searchPagePyv, 'searchPagePyv');
-                }
-                if (!watchPage && !searchPage) {
-                    homePageMastheads.forEach(temp => handleAdElement(temp, 'homePageMasthead') );
-                    handleAdElement(homePageInFeedTV, 'homePageInFeedTV');
-                    handleAdElement(homePageInFeedPrem, 'homePageInFeedPrem');
-                    handleAdElement(homePageBrandBanner, 'homePageBrandBanner');
-                    handleAdElement(homePageNudge, 'homePageNudge');
-                }
+        mutationsList.forEach((mutation) => {
+            if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+                mutation.addedNodes.forEach((addedNode) => {
+                    if (addedNode instanceof HTMLElement) {
+                        //console.debug(addedNode);
+                        Object.values(AdTypes).forEach (Type => {
+                            const matchedNode = addedNode.querySelector(Type.Selector)
+                            if (matchedNode) {
+                                handleAdElement(matchedNode, Type);
+                            }
+                        });
+                    }
+                });
             }
-        }
+        });
     }
 
     function clickElement(Element, descriptor, Msg) {
@@ -210,14 +190,15 @@
         console.log(curTime + " - AdSkip: " + Msg);
     }
     function DEBUG_highlightElement(Element) {
+        if (!Element || !Element.style || !Element.style.backgroundColor) return;
         setTimeout(function() {
             Element.style.transition = 'background-color 1s';
             Element.style.backgroundColor = '#00FF00'; // Set to transparent to start the fade
-        }, 1);
-        Element.addEventListener('transitionend', function() {
-            Element.style.removeProperty('background-color');
-            Element.style.removeProperty('transition');
-        }, { once: true });
+            Element.addEventListener('transitionend', function() {
+                Element.style.removeProperty('background-color');
+                Element.style.removeProperty('transition');
+            }, { once: true });
+        }, 100);
     }
 
     // Set Menu Bar color for status reporting.
