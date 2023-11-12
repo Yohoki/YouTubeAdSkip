@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YouTube Ad-Skip
 // @icon         https://www.gstatic.com/youtube/img/branding/favicon/favicon_192x192.png
-// @version      1.3.001
+// @version      1.3.002
 // @homepage     https://github.com/Yohoki/YouTubeAdSkip
 // @downloadURL  https://github.com/Yohoki/YouTubeAdSkip/raw/main/SkipAds.user.js
 // @updateURL    https://github.com/Yohoki/YouTubeAdSkip/raw/main/SkipAds.user.js
@@ -27,6 +27,8 @@
     let searchPage = window.location.href.includes('search');
     const searchBar = document.querySelector('ytd-searchbox[id="search"] div[id="container"]');
     const guideButton = document.querySelector('#start yt-icon-button#guide-button');
+    getSearchBar();
+    getGuideButton();
     //Debug button:
     const debugButton = document.createElement('div');
     const highlightButton = document.createElement('div');
@@ -46,9 +48,9 @@
 
     const AdTypes = {
         midVidAd: { // Mid-video ad break //
-            Selector: '.ad-showing video',
-            Message: null,//'Button found and clicked. (Mid-Vid Ad)',
-            Descriptor: '.ytp-ad-skip-button-slot button', // Oddity: Descriptor node not contained inside Selector node.
+            Selector: '#movie_player.ad-showing',
+            Message: null,
+            Descriptor: 'video',
             Action: 'midVidAd'
         },
         midVidAdButton: { // Mid-video ad break //
@@ -115,29 +117,29 @@
 
     function handleAdElement(element, type, descriptorOverride = false, descriptor = null) {
         var Descriptor = descriptorOverride ? descriptor : type.Descriptor;
-        if (element) {
-            switch (type.Action) {
-                case 'midVidAd':
-                    if (!element.duration || element.currentTime >= Math.floor(element.duration)) break;
-                    console.log(curTime + " - AdSkip: An ad is currently Playing.");
-                    element.currentTime = element.duration + 1;
-                    console.log(curTime + " - AdSkip: Fast Forwarded ad to end.");
-                    BlockedInterval = 10;
-                    break;
-                case 'click':
-                    clickElement(element, Descriptor, type.Message);
-                    break;
-                case 'hide':
-                    hideElement(element, Descriptor, type.Message);
-                    break;
-                case 'remove':
-                    removeElement(element, Descriptor, type.Message);
-                    break;
-                default:
-                    break;
-            }
-            setColor();
+        if (!element) return;
+        switch (type.Action) {
+            case 'midVidAd':
+                var adShowing = element.querySelector(type.Descriptor);
+                if (!adShowing.duration || adShowing.currentTime >= Math.floor(adShowing.duration)) break;
+                console.log(curTime + " - AdSkip: An ad is currently Playing.");
+                element.currentTime = adShowing.duration + 1;
+                console.log(curTime + " - AdSkip: Fast Forwarded ad to end.");
+                BlockedInterval = 10;
+                break;
+            case 'click':
+                clickElement(element, Descriptor, type.Message);
+                break;
+            case 'hide':
+                hideElement(element, Descriptor, type.Message);
+                break;
+            case 'remove':
+                removeElement(element, Descriptor, type.Message);
+                break;
+            default:
+                break;
         }
+        setColor();
     }
 
     function handleDOMChanges(mutationsList) {
@@ -154,10 +156,8 @@
                     if (addedNode instanceof HTMLElement) {
                         //console.debug(addedNode);
                         Object.values(AdTypes).forEach (Type => {
-                            const matchedNode = addedNode.querySelector(Type.Selector)
-                            if (matchedNode) {
-                                handleAdElement(matchedNode, Type);
-                            }
+                            const matchedNodes = addedNode.querySelectorAll(Type.Selector)
+                            matchedNodes.forEach( node => handleAdElement(node, Type) );
                         });
                     }
                 });
@@ -166,7 +166,7 @@
     }
 
     function clickElement(Element, descriptor, Msg) {
-        try { descriptor === null ? Element.click() : Element.querySelector(descriptor).click(); }
+        try { !descriptor ? Element.click() : Element.querySelector(descriptor).click(); }
         catch {} //Suppress console.error() in case of button not existing.
         removeElement(Element);
         BlockedInterval = 10;
@@ -175,14 +175,14 @@
     }
     function removeElement(Element, descriptor, Msg) {
         if (!Element) return;
-        try { descriptor === null ? Element.remove() : Element.querySelector(descriptor).remove(); }
+        try { !descriptor ? Element.remove() : Element.querySelector(descriptor).remove(); }
         catch {} //Suppress console.error() in case of button not existing.
         BlockedInterval = 10;
         if (!Msg) return;
         console.log(curTime + " - AdSkip: " + Msg);
     }
     function hideElement(Element, descriptor, Msg) {
-        if (descriptor !== null) Element = Element.querySelector(descriptor);
+        if (descriptor) Element = Element.querySelector(descriptor);
         if (Element.style.display === 'none') return;
         Element.style.display = 'none';
         BlockedInterval = 10;
@@ -204,7 +204,7 @@
     // Set Menu Bar color for status reporting.
     function setColor() {
         const menuBar = document.querySelector('#guide-icon');
-        if (!menuBar) { setTimeout(setColor, 100); return; }
+        if (!menuBar) { setTimeout(setColor, 1); return; }
         if (BlockedInterval>0) {
             menuBar.style.color = '#00FF00';
             menuBar.title = "AdSkip: Ad successfully skipped.";
@@ -244,16 +244,25 @@
 
     setInterval(setColor, 1000);
 
+    function getSearchBar() {
+        let searchBar = document.querySelector('ytd-searchbox[id="search"] div[id="container"]')
+        if (!searchBar) { setTimeout(getSearchBar, 1); return; }
+    }
+    function getGuideButton() {
+        let guideButton = document.querySelector('#start yt-icon-button#guide-button');
+        if (!guideButton) { setTimeout(getGuideButton, 1); return; }
+    }
+
     // Whitelist logic //
     function getCreatorID() {
         if (!watchPage) return;
         let creatorId = document.querySelector('a#header');
-        if (!creatorId) { setTimeout(getCreatorID, 1000); return; }
+        if (!creatorId) { setTimeout(getCreatorID, 1); return; }
         creatorID = creatorId.getAttribute("href");
     }
 
     function creatorIdInWhitelist() {
-        if (creatorID === null) getCreatorID();
+        if (!creatorID) getCreatorID();
         if (Whitelist.includes(creatorID) && creatorID !== null) return true;
         return false;
     }
@@ -326,12 +335,14 @@
     `;
 
     function addButtons() {
-        if (!debugMode || !searchBar) return;
+        if (!debugMode) return;
+        if (!searchBar) { setTimeout(addButtons, 1); return; }
         searchBar.appendChild(debugButton);
         searchBar.appendChild(highlightButton);
     }
     function addWatchPageButtons() {
-        if (!watchPage || !searchBar || !guideButton) return;
+        if (!watchPage) return;
+        if (!searchBar || !guideButton) { setTimeout(getGuideButton, 1); return; }
         if (!document.querySelector('div#Whitelist')) guideButton.after(WhitelistButton);
     }
     function removeWatchPageButtons() { removeElement(document.querySelector('#Whitelist'),null,null); }
@@ -349,7 +360,7 @@
         e.forEach( b => console.debug(b.innerHTML) );
     });
     WhitelistButton.addEventListener('click', function() {
-        if (creatorID == null) return;
+        if (!creatorID) return;
         if (Whitelist.includes(creatorID)) { Whitelist.splice(Whitelist.indexOf(creatorID)); GM_setValue("whitelist", Whitelist); }
         else { Whitelist.push(creatorID); GM_setValue("whitelist", Whitelist); }
         setColor();
