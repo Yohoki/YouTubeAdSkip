@@ -3,8 +3,8 @@
 // @icon         https://www.gstatic.com/youtube/img/branding/favicon/favicon_192x192.png
 // @version      1.5.000
 // @homepage     https://github.com/Yohoki/YouTubeAdSkip
-// @downloadURL  https://github.com/Yohoki/YouTubeAdSkip/raw/main/SkipAds.user.js
-// @updateURL    https://github.com/Yohoki/YouTubeAdSkip/raw/main/SkipAds.user.js
+// @downloadURL  https://github.com/Yohoki/YouTubeAdSkip/releases/latest/download/SkipAds.user.js
+// @updateURL    https://github.com/Yohoki/YouTubeAdSkip/releases/latest/download/SkipAds.user.js
 // @description  Simple ad-blocker bypass. Clicks "Skip Ads" button as soon as possible without triggering the adblock ban.
 // @author       Yohoki
 // @match        https://www.youtube.com/*
